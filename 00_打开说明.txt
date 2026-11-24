@@ -1,0 +1,32 @@
+破釜酒吧 | 个人作品包
+
+先把整个压缩包解压到本地文件夹。Windows 或 Mac 都可以使用，按下面三种用法选文件。
+
+1. 想马上看看并自由走动
+   打开 02_Offline/LeakyCauldron_Bar.html。用 Chrome、Edge 或 Safari 打开 HTML，
+   点击「进入酒吧」。WASD 移动，鼠标转头，Esc 暂停，R 回到吧台。
+   支持离线运行。浏览器版使用实时光照和简化反射，画质与 Cycles 成图有差异。
+
+2. 要在 Blender 里继续改模型或渲染
+   打开 01_Blender/LeakyCauldron_Bar.blend。这是吧台精修后的可编辑正式工程。
+   在 Blender 5.2.2 上生成和复开。贴图已打包，建议使用相同版本或兼容的更新版本。
+   打开后按 F12 可以重新渲染。笔记本上的渲染时间取决于电脑配置。
+
+3. 想用 Cycles 的材质灯光边看边走
+   打开 01_Blender/LeakyCauldron_Cycles_Walk.blend（本机最新保存）。
+   如果 GPU 预览卡住、黑屏或机器没有配置 Cycles GPU，
+   打开同目录的 LeakyCauldron_Cycles_Walk_CPU.blend（先前验证过的 CPU 版）。
+   若显示灰模，在 3D 视口按 Z，选「渲染」。
+   鼠标放在 3D 视口，按 F3 搜索「行走漫游」或 Walk Navigation。
+   WASD 移动，鼠标转头，左键确认位置，Esc 取消本次移动。
+   Cycles 是渐进渲染，移动时会重新采样，停下后逐渐清晰。预览帧率因电脑而异。
+
+其他文件夹
+   03_Renders：吧台 Cycles 高清成图、重建前后对比、主厅和壁炉的阶段渲染图。
+   04_Proposal：课程提案、参考来源和参考板。
+   05_Source：浏览器渲染代码、建模脚本、必要素材与早期 Blender 工程。
+   已生成的 .blend 和 .html 可直接打开。只有需要重新生成时才用脚本；
+   浏览器版构建命令是 python 05_Source/leaky_cauldron_bar/stage.py。
+   吧台 Blender 重建使用 Blender 的 Python 运行 build_blender.py，瓶签 PNG 已提供。
+
+项目：计算机图形学期末个人作品《破釜酒吧》。

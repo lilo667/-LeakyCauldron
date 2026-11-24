@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="梁致远的 Blender 场景建模与实时渲染作品集">
+  <title>梁致远 · 作品集</title>
+  <style>
+    :root{color-scheme:dark;--bg:#11100e;--card:#1a1815;--line:#3d352a;--gold:#dfb675;--text:#f4eadc;--muted:#c6bba9}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}
+    a{color:var(--gold)}header{max-width:1120px;margin:auto;padding:72px 24px 44px}
+    .eyebrow{color:var(--gold);letter-spacing:.18em;text-transform:uppercase;font-size:13px}
+    h1,h2,h3{line-height:1.2}h1{font-size:clamp(42px,8vw,72px);margin:12px 0}h2{font-size:32px}h3{font-size:22px;margin:0 0 10px}
+    .subtitle{max-width:720px;color:var(--muted);font-size:19px}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+    .button{display:inline-block;padding:11px 16px;border:1px solid var(--line);border-radius:7px;text-decoration:none}
+    .button.primary{background:var(--gold);color:#21170e;border-color:var(--gold);font-weight:700}
+    main{max-width:1120px;margin:auto;padding:20px 24px 80px}.project{overflow:hidden;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+    .heroimg{display:block;width:100%;max-height:560px;object-fit:cover;border-bottom:1px solid var(--line)}
+    .projectbody{padding:28px}.meta{color:var(--muted);font-size:14px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
+    .grid img{width:100%;height:210px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+    .links{display:flex;gap:18px;flex-wrap:wrap}.links a{font-weight:700}
+    section{margin-top:52px}.profile{display:grid;grid-template-columns:1.2fr .8fr;gap:28px}
+    .card{border:1px solid var(--line);border-radius:10px;padding:22px;background:var(--card)}
+    footer{border-top:1px solid var(--line);padding:24px;text-align:center;color:var(--muted)}
+    @media(max-width:760px){header{padding-top:44px}.profile{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.grid img{height:auto}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">个人作品集 · Portfolio</div>
+    <h1>梁致远</h1>
+    <p class="subtitle">AI方向学生，专注于计算机图形学、Blender 场景建模、材质灯光与实时渲染。</p>
+    <div class="actions">
+      <a class="button primary" href="./02_Offline/LeakyCauldron_Bar.html">进入在线 3D 演示</a>
+      <a class="button" href="https://github.com/lilo667" target="_blank" rel="noopener">GitHub 主页</a>
+    </div>
+  </header>
+
+  <main>
+    <article class="project">
+      <img class="heroimg" src="./03_Renders/Bar_Cycles.png" alt="破釜酒吧 Cycles 渲染成图">
+      <div class="projectbody">
+        <div class="meta">Blender · Cycles · WebGL · 2026</div>
+        <h2>破釜酒吧场景重建</h2>
+        <p>依据《哈利·波特》破釜酒吧视觉设定完成场景建模与渲染，包含吧台木作、酒瓶与玻璃器皿、壁炉、主厅结构、灯光和浏览器实时漫游。项目由我独立完成建模、材质、灯光、脚本与演示页面制作。</p>
+
+        <div class="grid">
+          <img src="./03_Renders/Bar_Before_After.png" alt="建模重建前后对比">
+          <img src="./03_Renders/Hearth_Study/Hearth.png" alt="壁炉场景研究">
+          <img src="./03_Renders/Hearth_Study/GreatRoom.png" alt="主厅场景渲染">
+        </div>
+
+        <h3>作品入口</h3>
+        <div class="links">
+          <a href="./02_Offline/LeakyCauldron_Bar.html">实时演示</a>
+          <a href="./01_Blender/LeakyCauldron_Bar.blend" download>Blender 工程</a>
+          <a href="./04_Proposal/PROPOSAL_zh.pdf" target="_blank" rel="noopener">课程提案 PDF</a>
+          <a href="./03_Renders/Bar_Cycles.png" target="_blank" rel="noopener">高清渲染图</a>
+          <a href="./05_Source/leaky_cauldron_bar/build_blender.py">建模源码</a>
+        </div>
+      </div>
+    </article>
+
+    <section class="profile">
+      <div class="card">
+        <h2>个人简介</h2>
+        <p>我是梁致远，一名 AI方向学生，正在拓展计算机图形学与三维内容制作能力。这个项目体现了我从场景规划、几何建模、程序化脚本、材质与灯光设置，到离线可视化和 WebGL 演示的完整制作流程。</p>
+      </div>
+      <div class="card">
+        <h2>技术关键词</h2>
+        <p>Blender · Python · Cycles · Geometry Nodes · 场景建模 · 材质与灯光 · HTML / JavaScript · WebGL / 实时渲染</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>演示视频</h2>
+      <p>演示视频录制完成后，请上传为 <code>06_Media/demo.mp4</code>，并将本处链接替换为：</p>
+      <p><code>&lt;video controls src="./06_Media/demo.mp4"&gt;&lt;/video&gt;</code></p>
+    </section>
+  </main>
+
+  <footer>梁致远 · 个人作品集</footer>
+</body>
+</html>

@@ -1,0 +1,10 @@
+﻿破釜酒吧 | 参考来源
+
+初期的片场与美术参考索引见 REFERENCES.md。完整影像和来源记录收在
+05_Source/leaky_cauldron_round01/references。
+
+吧台建模参考：
+Dmitry Rusakovich, Storytelling in a 3D Scene: Creating an Old Tavern with ZBrush & UE5
+https://80.lv/articles/storytelling-in-a-3d-scene-creating-an-old-tavern-with-zbrush-ue5
+Cambur theGrey, Victorian Home Pub Bar, BlenderKit
+https://www.blenderkit.com/asset-gallery-detail/c0563988-fcae-471b-9e16-f45c1d5471b1/

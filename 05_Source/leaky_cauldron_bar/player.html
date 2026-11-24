@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>破釜酒吧 · 吧台精模</title>
+<style>
+:root{color-scheme:dark;--cream:#f9ead3;--gold:#e5b478;--line:#766047}
+*{box-sizing:border-box}
+body{margin:0;background:#1c1511;color:var(--cream);font:14px system-ui,sans-serif;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+#intro{position:fixed;left:24px;bottom:26px;max-width:420px;background:#1c140fe8;border:1px solid var(--line);padding:20px 23px;border-radius:9px;box-shadow:0 14px 35px #120b0759}
+h1{font:600 clamp(25px,4vw,40px)/1.1 Georgia,"Songti SC",serif;margin:0 0 12px}
+p{margin:8px 0 15px;line-height:1.6;color:#e1cdb6}
+button,select{background:#261b13ed;color:var(--cream);font:inherit;border:1px solid var(--line);border-radius:5px;padding:7px 10px;cursor:pointer}
+button:hover,select:hover,button:focus-visible{border-color:var(--gold)}
+#start{background:#e2b67b;color:#24160c;border-color:var(--gold);font-weight:700;margin-right:6px}
+#panel{position:fixed;top:14px;left:14px;width:min(385px,calc(100vw - 28px));padding:11px;background:#1d150ef0;border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px #0004}
+summary{cursor:pointer;color:var(--gold);display:list-item}
+#fps{float:right;color:var(--cream);font-size:12px;font-variant-numeric:tabular-nums}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.settings label{display:grid;gap:4px;color:#e8d4bc;font-size:12px}
+.settings select{width:100%;font-size:13px}
+.slider{grid-column:1/-1;display:flex!important;justify-content:space-between;align-items:center}
+input[type=range]{width:62%;accent-color:var(--gold);cursor:pointer}
+#views{display:flex;gap:6px;margin-top:9px}
+#views button{flex:1}
+#result{display:block;margin-top:9px;color:var(--gold);white-space:pre-line;line-height:1.56;font-size:12px}
+#tip{position:fixed;bottom:13px;left:14px;color:#f4ddc2;background:#21170de7;padding:7px 10px;border-radius:4px}
+#pause{position:fixed;right:14px;top:14px}
+#reticle{position:fixed;top:50%;left:50%;width:4px;height:4px;border-radius:50%;background:#f2dfb8a6;pointer-events:none}
+[hidden]{display:none!important}
+</style>
+<canvas id="view" aria-label="破釜酒吧三维场景"></canvas>
+<details open id="panel">
+  <summary>渲染设置 <span id="fps">— FPS</span></summary>
+  <div class="settings">
+    <label>渲染模式 <select id="mode">
+      <option value="0">烘焙光照</option>
+      <option value="1">加光追反射（SSR）</option>
+      <option value="2" selected>反射＋实时阴影</option>
+    </select></label>
+    <label>分辨率 <select id="quality">
+      <option value="1080">1080p</option><option value="720" selected>720p</option><option value="540">540p</option><option value="480">480p</option>
+    </select></label>
+    <label class="slider">高亮反射命中区域 <input id="hits" type="checkbox"></label>
+    <label class="slider">移动灯光 <input id="lamp" type="range" min="-1" max="1" step=".02" value="0"></label>
+    <label class="slider">曝光 <input id="exposure" type="range" min="1.2" max="3.8" step=".05" value="2.05"></label>
+  </div>
+  <div id="views">
+    <button id="hearth">壁炉</button><button id="hall">主厅</button><button id="bar">吧台</button>
+  </div>
+  <output id="result" role="status"></output>
+</details>
+<section id="intro">
+  <h1>破釜酒吧</h1>
+  <p>沿橡木吧台近看酒杯、瓶签与木作。<br>WASD 移动 · 鼠标转头 · R 回到起点</p>
+  <button id="start" disabled>进入酒吧</button>
+  <button id="benchmark" disabled>三档帧率实测</button>
+  <button id="compare" disabled>保存对比图</button>
+</section>
+<button id="pause" hidden>暂停</button><div id="tip" hidden></div><div id="reticle" hidden></div>
+<!-- Engravings cropped from Jack1956, Leaky Cauldron set, Wikimedia Commons, CC0. -->
+<!-- SCENE -->
+<!-- RENDER -->
+<script>
+"use strict";
+const ui=Object.fromEntries(["view","intro","panel","start","benchmark","compare","result","fps","mode","quality","lamp","exposure","hits","hearth","hall","bar","pause","tip","reticle"].map(id=>[id,document.getElementById(id)]));
+const views={
+  hearth:[3.05,.86,.237,-.187],hall:[3.22,.02,2.88,.01],bar:[-1.98,-.06,3.13,-.025]
+};
+const tour=[
+  views.hearth,[2.93,.87,2.15,.02],[.18,.73,3.00,.02],[-1.45,.18,3.15,-.02],
+  [-2.67,.18,1.25,.01],[-1.45,.18,.35,-.03],[.14,.72,.16,-.03],[2.38,.82,.28,-.12],views.hearth
+];
+let [x,y,yaw,pitch]=views.bar;
+const keys=new Set();
+let renderer,active=false,dragging=false,bench=null,frameTime=0,fpsStart=0,frames=0,lastFps=0;
+const settings=[ui.quality,ui.mode,ui.lamp,ui.exposure,ui.hits,ui.hearth,ui.hall,ui.bar];
+const modeNames=["烘焙光照","光追反射","反射＋实时阴影"];
+
+function isOpen(a,b){
+  if(a < -5.8 || a > 5.79 || b < -3.79 || b > 3.79)return false;
+  return !GEOMETRY.collision.some(([l,d,r,t])=>Math.hypot(Math.max(l-a,0,a-r),Math.max(d-b,0,b-t))<.16);
+}
+function rotate(dx,dy){
+  yaw-=dx*.0027;
+  pitch=Math.max(-1.45,Math.min(1.45,pitch-dy*.0027));
+}
+function update(dt){
+  if(!active)return;
+  yaw+=(Number(keys.has("ArrowLeft"))-Number(keys.has("ArrowRight")))*dt*1.8;
+  rotate(0,(Number(keys.has("ArrowDown"))-Number(keys.has("ArrowUp")))*dt*650);
+  const f=Number(keys.has("KeyW"))-Number(keys.has("KeyS"));
+  const r=Number(keys.has("KeyD"))-Number(keys.has("KeyA"));
+  if(!f&&!r)return;
+  const speed=dt*(keys.has("ShiftLeft")?2.5:1.55)/Math.hypot(f,r);
+  const dx=(Math.cos(yaw)*f+Math.sin(yaw)*r)*speed;
+  const dy=(Math.sin(yaw)*f-Math.cos(yaw)*r)*speed;
+  if(isOpen(x+dx,y))x+=dx;
+  if(isOpen(x,y+dy))y+=dy;
+}
+function setActive(value){
+  active=value;
+  ui.intro.hidden=value;
+  ui.tip.hidden=ui.reticle.hidden=ui.pause.hidden=!value;
+  ui.panel.open=!value;
+  keys.clear();
+  if(!value&&document.pointerLockElement===ui.view)document.exitPointerLock();
+  ui.tip.textContent="WASD 移动 · 鼠标转头 · Esc 暂停";
+}
+function resize(){
+  if(!renderer)return;
+  const h=Number(ui.quality.value);
+  renderer.resize(Math.round(h*16/9),h);
+}
+function metrics(samples){
+  const sorted=samples.slice().sort((a,b)=>a-b);
+  return {
+    fps:1000*sorted.length/sorted.reduce((sum,n)=>sum+n,0),
+    p99:sorted[Math.ceil(sorted.length*.99)-1],
+    frames: sorted.length
+  };
+}
+function benchmark(now,delta){
+  if(bench.start===null)bench.start=now;
+  const elapsed=now-bench.start;
+  if(elapsed>1200&&delta>0)bench.samples.push(delta);
+  if(elapsed>=9600){
+    bench.results.push(metrics(bench.samples));
+    if(bench.results.length===3){
+      ui.mode.value=bench.selected;
+      ui.lamp.value=bench.lamp;
+      ui.result.textContent=`${ui.view.width}×${ui.view.height} · 平均帧率 / P99 帧耗时\n`+
+        bench.results.map(({fps,p99},i)=>`${modeNames[i]}　${fps.toFixed(1)} FPS / ${p99.toFixed(1)} ms`).join("\n");
+      bench=null;
+      for(const control of settings)control.disabled=false;
+      setActive(false);
+      [x,y,yaw,pitch]=views.hearth;
+      return;
+    }
+    bench.start=now;bench.samples=[];
+  }
+  const mode=bench.results.length;
+  const index=(tour.length-1)*Math.min(1,(now-bench.start)/9600);
+  const from=tour[Math.floor(index)],to=tour[Math.min(tour.length-1,Math.floor(index)+1)];
+  const w=index%1,t=w*w*(3-2*w);
+  [x,y,yaw,pitch]=from.map((v,i)=>v+(to[i]-v)*t);
+  ui.tip.textContent=`正在测试 ${mode+1}/3 · ${modeNames[mode]}`;
+}
+function renderFrame(now,mode=Number(ui.mode.value),slider=Number(ui.lamp.value),aspect=innerWidth/innerHeight,showHits=ui.hits.checked&&!bench){
+  const sy=Math.sin(yaw),cy=Math.cos(yaw),sp=Math.sin(pitch),cp=Math.cos(pitch);
+  const axes={forward:[cy*cp,sy*cp,sp],right:[sy,-cy,0],up:[-cy*sp,-sy*sp,cp]};
+  renderer.draw({eye:[x,y,1.58],axes,ratio:aspect,time:now/1000,mode,
+    lamp:[3.72+slider*.18,1.37+slider*1.69,2.22],aim:[5.36,1.40,.66],exposure:Number(ui.exposure.value),showHits});
+}
+function frame(now){
+  const delta=frameTime?now-frameTime:0;
+  frameTime=now;
+  if(bench)benchmark(now,delta);
+  else update(Math.min(.04,delta/1000));
+  renderFrame(now,bench?bench.results.length:Number(ui.mode.value));
+  frames++;
+  if(now-fpsStart>=1000){
+    lastFps=Math.round(frames*1000/(now-fpsStart));
+    ui.fps.textContent=`${lastFps} FPS`;fpsStart=now;frames=0;
+  }
+  requestAnimationFrame(frame);
+}
+function pause(){
+  if(bench){
+    ui.lamp.value=bench.lamp;
+    bench=null;
+    for(const control of settings)control.disabled=false;
+    ui.result.textContent="测试已取消";
+  }
+  setActive(false);
+}
+ui.pause.onclick=pause;
+ui.start.onclick=()=>{
+  setActive(true);
+  if(ui.view.requestPointerLock){
+    try{ui.view.requestPointerLock()?.catch(()=>{});}catch{}
+  }
+};
+ui.benchmark.onclick=()=>{
+  bench={start:null,samples:[],results:[],selected:ui.mode.value,lamp:ui.lamp.value};
+  ui.lamp.value="0";
+  for(const control of settings)control.disabled=true;
+  setActive(true);
+};
+ui.compare.onclick=()=>{
+  const sheet=document.createElement("canvas");
+  const tileWidth=700,tileHeight=394,margin=16,caption=34;
+  sheet.width=tileWidth*2+margin*3;
+  sheet.height=(tileHeight+caption)*2+margin*3;
+  const ctx=sheet.getContext("2d");
+  ctx.fillStyle="#1d150f";
+  ctx.fillRect(0,0,sheet.width,sheet.height);
+  ctx.font='16px system-ui';
+  const shots=[
+    ["烘焙光照",0,0],["光追反射（SSR）",1,0],
+    ["反射＋实时阴影｜灯在左侧",2,.82],["反射＋实时阴影｜灯在右侧",2,-.82]
+  ];
+  const now=frameTime;
+  const width=ui.view.width,height=ui.view.height;
+  renderer.resize(tileWidth,tileHeight);
+  try{
+    shots.forEach(([label,mode,lamp],i)=>{
+      const a=margin+(tileWidth+margin)*(i%2);
+      const b=margin+(tileHeight+caption+margin)*Math.floor(i/2);
+      renderFrame(now,mode,lamp,tileWidth/tileHeight,false);
+      ctx.drawImage(ui.view,a,b,tileWidth,tileHeight);
+      ctx.fillStyle="#f5dabb";
+      ctx.fillText(label,a,b+tileHeight+24);
+    });
+  }finally{
+    renderer.resize(width,height);
+  }
+  sheet.toBlob(blob=>{
+    if(!blob)return;
+    const href=URL.createObjectURL(blob);
+    const link=document.createElement("a");
+    link.href=href;link.download="LeakyCauldron_Bar_Export.png";
+    link.click();
+    setTimeout(()=>URL.revokeObjectURL(href),2000);
+  },"image/png");
+};
+for(const name of Object.keys(views)){
+  ui[name].onclick=()=>{[x,y,yaw,pitch]=views[name];};
+}
+ui.quality.onchange=resize;
+addEventListener("resize",()=>{if(bench)pause();});
+document.addEventListener("pointerlockchange",()=>{
+  if(!document.pointerLockElement&&active&&!bench)pause();
+});
+document.addEventListener("visibilitychange",()=>{if(document.hidden)pause();});
+addEventListener("keydown",event=>{
+  if(event.code==="Escape")pause();
+  if(!active||bench)return;
+  if(event.code==="KeyR")[x,y,yaw,pitch]=views.bar;
+  if(/^Key[WASD]$|^Arrow|^Shift/.test(event.code)){keys.add(event.code);event.preventDefault();}
+});
+addEventListener("keyup",event=>keys.delete(event.code));
+addEventListener("blur",()=>keys.clear());
+ui.view.addEventListener("pointerdown",event=>{
+  if(!active||bench||document.pointerLockElement===ui.view)return;
+  dragging=true;ui.view.setPointerCapture(event.pointerId);
+});
+ui.view.addEventListener("lostpointercapture",()=>dragging=false);
+addEventListener("pointerup",()=>dragging=false);
+addEventListener("mousemove",event=>{
+  if(active&&!bench&&(dragging||document.pointerLockElement===ui.view))rotate(event.movementX,event.movementY);
+});
+window.addEventListener('error',event=>{
+  ui.panel.open=true;
+  ui.result.textContent="渲染失败 · "+event.message;
+});
+ui.view.addEventListener("webglcontextlost",()=>{
+  ui.panel.open=true;
+  ui.result.textContent="图形设备连接中断，请重新载入页面。";
+});
+async function init(){
+  renderer=await createRenderer(ui.view,GEOMETRY);
+  GEOMETRY.vertices=GEOMETRY.indices=GEOMETRY.artwork=GEOMETRY.labels=null;
+  resize();
+  ui.start.disabled=ui.benchmark.disabled=ui.compare.disabled=false;
+  fpsStart=performance.now();
+  requestAnimationFrame(frame);
+}
+init().catch(err=>{ui.result.textContent="启动失败 · "+err.message;});
+</script>
+</html>
