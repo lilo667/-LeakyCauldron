@@ -52,14 +52,7 @@ python -m http.server 4173
 
 ## 演示视频
 
-建议录制 30–60 秒，展示：
-
-1. 作品集首页
-2. 进入实时 3D 演示
-3. 切换壁炉、主厅和吧台视角
-4. 展示 Cycles 成图与 Blender 工程
-
-录制完成后保存为 `06_Media/demo.mp4`。
+演示视频已保存为 `06_Media/demo.mp4`，并嵌入作品集首页。
 
 ## 部署到 GitHub Pages
 
